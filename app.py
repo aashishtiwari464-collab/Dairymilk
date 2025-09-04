@@ -108,7 +108,6 @@ if current_shop:
             phone = st.text_input("Phone")
             submitted = st.form_submit_button("Add Farmer")
             if submitted and fid and name:
-                global farmers
                 farmers.loc[len(farmers)] = [current_shop,fid,name,village,phone]
                 save_data(farmers,FARMERS_FILE)
                 st.success("Farmer added!")
@@ -137,7 +136,6 @@ if current_shop:
                     amount=litres*rate
                 submitted = st.form_submit_button("Save Entry")
                 if submitted:
-                    global milk_data
                     milk_data.loc[len(milk_data)] = [current_shop,date,farmer.split(" - ")[0],session,litres,fat,clr,rate,amount]
                     save_data(milk_data,MILK_FILE)
                     st.success("Milk entry saved!")
