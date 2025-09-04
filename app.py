@@ -160,25 +160,28 @@ if current_shop:
 
 
     # --- Import Data ---
-    elif menu=="Import Data":
-        st.header("📥 Import CSV/Excel")
-        file = st.file_uploader("Upload CSV/Excel for Farmers or Milk", type=["csv","xlsx"])
+    elif menu == "Import Data":
+         st.header("📥 Import CSV/Excel")
+        file = st.file_uploader("Upload CSV/Excel for Farmers or Milk", type=["csv", "xlsx"])
         if file:
             df_import = pd.read_excel(file) if file.name.endswith("xlsx") else pd.read_csv(file)
-            if "FarmerID" in df_import.columns:
-                global farmers
-                df_import["ShopName"]=current_shop  
-                farmers=pd.concat([farmers,df_import],ignore_index=True)
-                save_data(farmers,FARMERS_FILE)
-                st.success("Farmers imported!")
-            elif "Litres" in df_import.columns:
-                global milk_data
-                df_import["ShopName"]=current_shop
-                milk_data=pd.concat([milk_data,df_import],ignore_index=True)
-                save_data(milk_data,MILK_FILE)
-                st.success("Milk data imported!")
-            else:
-                st.error("Unknown file format")
+
+        if "FarmerID" in df_import.columns:
+            global farmers   # 👈 must come first
+            df_import["ShopName"] = current_shop  
+            farmers = pd.concat([farmers, df_import], ignore_index=True)
+            save_data(farmers, FARMERS_FILE)
+            st.success("Farmers imported!")
+
+        elif "Litres" in df_import.columns:
+            global milk_data   # 👈 must come first
+            df_import["ShopName"] = current_shop
+            milk_data = pd.concat([milk_data, df_import], ignore_index=True)
+            save_data(milk_data, MILK_FILE)
+            st.success("Milk data imported!")
+
+        else:
+            st.error("Unknown file format")
 
 
     # --- Rate Chart ---
