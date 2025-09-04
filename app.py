@@ -166,8 +166,8 @@ if current_shop:
         if file:
             df_import = pd.read_excel(file) if file.name.endswith("xlsx") else pd.read_csv(file)
             if "FarmerID" in df_import.columns:
-                df_import["ShopName"]=current_shop
-                global farmers  
+                global farmers
+                df_import["ShopName"]=current_shop  
                 farmers=pd.concat([farmers,df_import],ignore_index=True)
                 save_data(farmers,FARMERS_FILE)
                 st.success("Farmers imported!")
