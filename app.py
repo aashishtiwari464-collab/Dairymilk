@@ -161,7 +161,7 @@ if current_shop:
 
     # --- Import Data ---
     elif menu == "Import Data":
-         st.header("📥 Import CSV/Excel")
+        st.header("📥 Import CSV/Excel")
         file = st.file_uploader("Upload CSV/Excel for Farmers or Milk", type=["csv", "xlsx"])
         if file:
             df_import = pd.read_excel(file) if file.name.endswith("xlsx") else pd.read_csv(file)
