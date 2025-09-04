@@ -151,7 +151,6 @@ if current_shop:
 
             # Farmer import
             if "FarmerID" in df_import.columns:
-                global farmers
                 df_import["ShopName"] = current_shop
                 farmers = pd.concat([farmers, df_import], ignore_index=True)
                 save_data(farmers, FARMERS_FILE)
@@ -159,7 +158,6 @@ if current_shop:
 
             # Milk import
             elif "Litres" in df_import.columns:
-                global milk_data
                 df_import["ShopName"] = current_shop
                 milk_data = pd.concat([milk_data, df_import], ignore_index=True)
                 save_data(milk_data, MILK_FILE)
@@ -173,7 +171,6 @@ if current_shop:
         st.header("📊 Rate Chart Upload")
         file = st.file_uploader("Upload Rate Chart CSV (Fat, CLR, Rate)", type=["csv"])
         if file:
-            global rate_chart
             rate_chart = pd.read_csv(file)
             save_data(rate_chart,RATE_FILE)
             st.success("Rate chart updated!")
