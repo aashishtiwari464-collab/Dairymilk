@@ -4,17 +4,14 @@ import os
 from fpdf import FPDF
 from datetime import datetime
 
-
 # --- Folders & Files ---
 if not os.path.exists("data"):
     os.makedirs("data")
-
 
 USERS_FILE = "data/users.csv"       # Shopkeeper login & admin approval
 FARMERS_FILE = "data/farmers.csv"   # Farmers data
 MILK_FILE = "data/milk_data.csv"    # Milk collection
 RATE_FILE = "data/rate_chart.csv"   # Rate chart
-
 
 # --- Load or init data ---
 def load_data(file, cols):
@@ -22,32 +19,24 @@ def load_data(file, cols):
         return pd.read_csv(file)
     return pd.DataFrame(columns=cols)
 
+def save_data(df, file):
+    df.to_csv(file, index=False)
 
+# Initialize global dataframes
 users = load_data(USERS_FILE, ["Username","Password","ShopName","Approved"])
 farmers = load_data(FARMERS_FILE, ["ShopName","FarmerID","Name","Village","Phone"])
 milk_data = load_data(MILK_FILE, ["ShopName","Date","FarmerID","Session","Litres","Fat","CLR","Rate","Amount"])
 rate_chart = load_data(RATE_FILE, ["Fat","CLR","Rate"])
 
-
-# --- Save ---
-def save_data(df, file):
-    df.to_csv(file, index=False)
-
-
 # --- Admin login ---
 ADMIN_USERNAME = "admin"
 ADMIN_PASSWORD = "admin123"
 
-
 # --- Login ---
 st.title("🐄 Dairy Billing System")
 
-
 menu_option = st.radio("Choose", ["Shopkeeper Login", "Admin Login", "Register Shopkeeper"])
-
-
 current_shop = None
-
 
 # --- Shopkeeper Registration ---
 if menu_option == "Register Shopkeeper":
@@ -67,7 +56,6 @@ if menu_option == "Register Shopkeeper":
                     st.success("Registered! Waiting for admin approval.")
             else:
                 st.warning("Fill all fields.")
-
 
 # --- Admin Login ---
 elif menu_option == "Admin Login":
@@ -91,7 +79,6 @@ elif menu_option == "Admin Login":
             else:
                 st.error("Invalid admin credentials")
 
-
 # --- Shopkeeper Login ---
 elif menu_option == "Shopkeeper Login":
     st.subheader("Shopkeeper Login")
@@ -107,11 +94,9 @@ elif menu_option == "Shopkeeper Login":
             else:
                 st.error("Invalid credentials or not approved")
 
-
 # --- Shopkeeper App ---
 if current_shop:
     menu = st.sidebar.radio("Menu", ["Farmer Management","Milk Entry","Import Data","Rate Chart","Billing"])
-
 
     # --- Farmer Management ---
     if menu=="Farmer Management":
@@ -123,12 +108,12 @@ if current_shop:
             phone = st.text_input("Phone")
             submitted = st.form_submit_button("Add Farmer")
             if submitted and fid and name:
+                global farmers
                 farmers.loc[len(farmers)] = [current_shop,fid,name,village,phone]
                 save_data(farmers,FARMERS_FILE)
                 st.success("Farmer added!")
         st.write("### Farmer List")
         st.dataframe(farmers[farmers["ShopName"]==current_shop])
-
 
     # --- Milk Entry ---
     elif menu=="Milk Entry":
@@ -152,12 +137,12 @@ if current_shop:
                     amount=litres*rate
                 submitted = st.form_submit_button("Save Entry")
                 if submitted:
+                    global milk_data
                     milk_data.loc[len(milk_data)] = [current_shop,date,farmer.split(" - ")[0],session,litres,fat,clr,rate,amount]
                     save_data(milk_data,MILK_FILE)
                     st.success("Milk entry saved!")
         st.write("### Milk Data")
         st.dataframe(milk_data[milk_data["ShopName"]==current_shop])
-
 
     # --- Import Data ---
     elif menu == "Import Data":
@@ -166,35 +151,38 @@ if current_shop:
         if file:
             df_import = pd.read_excel(file) if file.name.endswith("xlsx") else pd.read_csv(file)
 
-        if "FarmerID" in df_import.columns:
-            global farmers
-            df_import["ShopName"] = current_shop
-            farmers = pd.concat([farmers, df_import], ignore_index=True)
-            save_data(farmers, FARMERS_FILE)
-            st.success("Farmers imported!")
+            # Farmer import
+            if "FarmerID" in df_import.columns:
+                global farmers
+                df_import["ShopName"] = current_shop
+                farmers = pd.concat([farmers, df_import], ignore_index=True)
+                save_data(farmers, FARMERS_FILE)
+                st.success("Farmers imported!")
 
-        elif "Litres" in df_import.columns:
-            global milk_data   # 👈 must come first
-            df_import["ShopName"] = current_shop
-            milk_data = pd.concat([milk_data, df_import], ignore_index=True)
-            save_data(milk_data, MILK_FILE)
-            st.success("Milk data imported!")
+            # Milk import
+            elif "Litres" in df_import.columns:
+                global milk_data
+                df_import["ShopName"] = current_shop
+                milk_data = pd.concat([milk_data, df_import], ignore_index=True)
+                save_data(milk_data, MILK_FILE)
+                st.success("Milk data imported!")
 
-        else:
-            st.error("Unknown file format")
-
+            else:
+                st.error("Unknown file format: expected 'FarmerID' or 'Litres' columns")
 
     # --- Rate Chart ---
     elif menu=="Rate Chart":
-        global rate_chart
         st.header("📊 Rate Chart Upload")
         file = st.file_uploader("Upload Rate Chart CSV (Fat, CLR, Rate)", type=["csv"])
         if file:
-            rate_chart=pd.read_csv(file)
+            global rate_chart
+            rate_chart = pd.read_csv(file)
             save_data(rate_chart,RATE_FILE)
             st.success("Rate chart updated!")
-        st.write(rate_chart)
-
+        if not rate_chart.empty:
+            st.write(rate_chart)
+        else:
+            st.info("No rate chart available yet.")
 
     # --- Billing ---
     elif menu=="Billing":
@@ -212,7 +200,8 @@ if current_shop:
             pdf.ln(5)
             headers=["Farmer","Session","Litres","Fat","CLR","Rate","Amount"]
             widths=[40,30,25,20,20,20,25]
-            for i,h in enumerate(headers): pdf.cell(widths[i],8,h,border=1,align='C')
+            for i,h in enumerate(headers): 
+                pdf.cell(widths[i],8,h,border=1,align='C')
             pdf.ln()
             for _,row in shop_milk.iterrows():
                 pdf.cell(widths[0],8,str(row["FarmerID"]),border=1,align='C')
@@ -226,4 +215,5 @@ if current_shop:
             filename = f"data/{current_shop}_monthly_bill.pdf"
             pdf.output(filename)
             st.success(f"Invoice generated: {filename}")
-            st.download_button("Download Invoice", filename)
+            with open(filename, "rb") as f:
+                st.download_button("Download Invoice", f, file_name=f"{current_shop}_monthly_bill.pdf")
