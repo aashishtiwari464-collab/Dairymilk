@@ -167,10 +167,12 @@ if current_shop:
             df_import = pd.read_excel(file) if file.name.endswith("xlsx") else pd.read_csv(file)
             if "FarmerID" in df_import.columns:
                 df_import["ShopName"]=current_shop
+                global farmers  
                 farmers=pd.concat([farmers,df_import],ignore_index=True)
                 save_data(farmers,FARMERS_FILE)
                 st.success("Farmers imported!")
             elif "Litres" in df_import.columns:
+                global milk_data
                 df_import["ShopName"]=current_shop
                 milk_data=pd.concat([milk_data,df_import],ignore_index=True)
                 save_data(milk_data,MILK_FILE)
@@ -181,10 +183,10 @@ if current_shop:
 
     # --- Rate Chart ---
     elif menu=="Rate Chart":
+        global rate_chart
         st.header("📊 Rate Chart Upload")
         file = st.file_uploader("Upload Rate Chart CSV (Fat, CLR, Rate)", type=["csv"])
         if file:
-            global rate_chart
             rate_chart=pd.read_csv(file)
             save_data(rate_chart,RATE_FILE)
             st.success("Rate chart updated!")
